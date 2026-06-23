@@ -1,13 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { readSelection, snapToWords } from "@/lib/highlights/offsets";
 import { intensityBand, type Segment } from "@/lib/highlights/segmentation";
 import { createHighlight, deleteHighlight } from "@/lib/actions/highlights";
 import { HighlightSheet } from "@/components/reader/HighlightSheet";
-import type { NoteThreadView } from "@/lib/social-types";
+import { NoteSheet } from "@/components/notes/NoteSheet";
+import type { NoteSpan, NoteThreadView, NoteView } from "@/lib/social-types";
+
+type BlockMarker = { start: number; end: number; count: number; key: string };
 
 export type ReaderBlock = {
   id: string;
@@ -49,11 +52,32 @@ export function Annotator({
   const [pending, setPending] = useState<Pending | null>(null);
   const [busy, setBusy] = useState(false);
   const [activeMark, setActiveMark] = useState<ActiveMark | null>(null);
+  const [activeThread, setActiveThread] = useState<{ span: NoteSpan; notes: NoteView[] } | null>(null);
 
   const notesFor = (blockId: string, start: number, end: number) =>
     noteThreads.find(
       (t) => t.blockId === blockId && t.start === start && t.end === end,
     )?.notes ?? [];
+
+  // Inline note markers: one per note-anchored span in a block.
+  const markersFor = (blockId: string): BlockMarker[] =>
+    noteThreads
+      .filter((t) => t.blockId === blockId)
+      .map((t) => ({
+        start: t.start,
+        end: t.end,
+        count: t.notes.length,
+        key: `${t.blockId}:${t.start}:${t.end}`,
+      }));
+
+  const openThread = (key: string) => {
+    const t = noteThreads.find((x) => `${x.blockId}:${x.start}:${x.end}` === key);
+    if (!t) return;
+    setActiveThread({
+      span: { blockId: t.blockId, articleId: article.id, start: t.start, end: t.end, text: t.text },
+      notes: t.notes,
+    });
+  };
 
   const blockText = useCallback(
     (blockId: string) => blocks.find((b) => b.id === blockId)?.text ?? "",
@@ -140,8 +164,8 @@ export function Annotator({
         {blocks.map((b) => (
           <p key={b.id} data-block-id={b.id} className="select-text">
             {view === "everyone"
-              ? renderHeatmap(b)
-              : renderMine(b, (m) =>
+              ? renderHeatmap(b, markersFor(b.id), openThread)
+              : renderMine(b, markersFor(b.id), openThread, (m) =>
                   setActiveMark({
                     id: m.id,
                     text: b.text.slice(m.start, m.end),
@@ -197,22 +221,79 @@ export function Annotator({
           onDelete={() => removeMark(activeMark.id)}
         />
       )}
+
+      {activeThread && (
+        <NoteSheet
+          span={activeThread.span}
+          notes={activeThread.notes}
+          canPost={isLoggedIn}
+          onClose={() => setActiveThread(null)}
+        />
+      )}
     </div>
   );
 }
 
-function renderHeatmap(b: ReaderBlock) {
+/** Slice block text from `from`..`to`, inserting a clickable note marker at the
+ * end offset of any note span that lands inside the range. */
+function sliceWithMarkers(
+  text: string,
+  from: number,
+  to: number,
+  markers: BlockMarker[],
+  onMarker: (key: string) => void,
+  keyBase: string,
+): ReactNode {
+  const hits = markers
+    .filter((m) => m.end > from && m.end <= to)
+    .sort((a, b) => a.end - b.end);
+  if (hits.length === 0) return text.slice(from, to);
+
+  const nodes: ReactNode[] = [];
+  let cursor = from;
+  hits.forEach((m, i) => {
+    if (m.end > cursor) nodes.push(text.slice(cursor, m.end));
+    nodes.push(
+      <NoteMarker key={`${keyBase}-m${i}`} count={m.count} onClick={() => onMarker(m.key)} />,
+    );
+    cursor = m.end;
+  });
+  if (cursor < to) nodes.push(text.slice(cursor, to));
+  return nodes;
+}
+
+function NoteMarker({ count, onClick }: { count: number; onClick: () => void }) {
+  return (
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+      title={`${count} not · tartışmayı aç`}
+      aria-label={`${count} not`}
+      className="relative -top-2 mx-0.5 inline-flex h-4 min-w-4 cursor-pointer select-none items-center justify-center rounded-full bg-red px-1 align-baseline font-label text-[9px] leading-none text-cream hover:bg-red-dark"
+    >
+      {count}
+    </button>
+  );
+}
+
+function renderHeatmap(
+  b: ReaderBlock,
+  markers: BlockMarker[],
+  onMarker: (key: string) => void,
+) {
   return b.segments.map((seg, i) => {
     const band = intensityBand(seg.count, b.maxCount);
-    const slice = b.text.slice(seg.start, seg.end);
-    if (band === 0) return <span key={i}>{slice}</span>;
+    const content = sliceWithMarkers(b.text, seg.start, seg.end, markers, onMarker, `${b.id}-s${i}`);
+    if (band === 0) return <span key={i}>{content}</span>;
     return (
       <span
         key={i}
         className={`hl-band-${band} rounded-[2px]`}
         title={`${seg.count} kişi altını çizdi`}
       >
-        {slice}
+        {content}
       </span>
     );
   });
@@ -220,16 +301,18 @@ function renderHeatmap(b: ReaderBlock) {
 
 function renderMine(
   b: ReaderBlock,
+  markers: BlockMarker[],
+  onMarker: (key: string) => void,
   onClick: (m: { id: string; start: number; end: number }) => void,
 ) {
   const tiles = tileWithRanges(b.text.length, b.mine);
   return tiles.map((t, i) => {
-    const slice = b.text.slice(t.start, t.end);
-    if (!t.mark) return <span key={i}>{slice}</span>;
+    const content = sliceWithMarkers(b.text, t.start, t.end, markers, onMarker, `${b.id}-t${i}`);
+    if (!t.mark) return <span key={i}>{content}</span>;
     const mark = t.mark;
     return (
       <span key={i} className="hl-mine rounded-[2px]" onClick={() => onClick(mark)}>
-        {slice}
+        {content}
       </span>
     );
   });
