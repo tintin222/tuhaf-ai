@@ -3,7 +3,12 @@ import Link from "next/link";
 import { Avatar } from "@/components/Avatar";
 import { Annotator } from "@/components/reader/Annotator";
 import { AudioPlayer } from "@/components/reader/AudioPlayer";
-import { getArticleForReader, getOverlapSuggestions } from "@/lib/db/queries";
+import { Discussion } from "@/components/notes/Discussion";
+import {
+  getArticleForReader,
+  getArticleNotes,
+  getOverlapSuggestions,
+} from "@/lib/db/queries";
 import { getCurrentUser } from "@/lib/auth/session";
 import { formatDateWithDay, formatCount } from "@/lib/format";
 
@@ -20,7 +25,10 @@ export default async function ReaderPage({
   if (!data) notFound();
 
   const { article, blocks, underlinerCount, highlightCount } = data;
-  const suggestions = user ? await getOverlapSuggestions(user.id, 6) : [];
+  const [suggestions, noteThreads] = await Promise.all([
+    user ? getOverlapSuggestions(user.id, 6) : Promise.resolve([]),
+    getArticleNotes(article.id),
+  ]);
 
   return (
     <article className="mx-auto max-w-reader px-5 py-12">
@@ -58,7 +66,8 @@ export default async function ReaderPage({
       <Annotator
         blocks={blocks}
         isLoggedIn={!!user}
-        article={{ title: article.title, publisherName: article.publisher.name }}
+        article={{ id: article.id, title: article.title, publisherName: article.publisher.name }}
+        noteThreads={noteThreads}
       />
 
       <p className="mt-10 font-body text-sm text-cream-faint">
@@ -89,6 +98,8 @@ export default async function ReaderPage({
           </ul>
         </section>
       )}
+
+      <Discussion threads={noteThreads} canPost={!!user} />
 
       <div className="mt-12">
         <AudioPlayer

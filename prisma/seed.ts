@@ -377,6 +377,97 @@ async function main() {
   await prisma.follow.createMany({ data: followData });
   console.log(`Follows: ${followData.length}`);
 
+  // Reactions — readers say "ben de" on each other's underlines, clustered so
+  // popular highlights carry visible counts.
+  const seededHighlights = await prisma.highlight.findMany({
+    select: { id: true, userId: true },
+  });
+  const reactionRows: { highlightId: string; userId: string }[] = [];
+  const reactionSeen = new Set<string>();
+  for (const h of sample(seededHighlights, Math.min(450, seededHighlights.length))) {
+    for (const r of sample(users, randInt(0, 9))) {
+      if (r.id === h.userId) continue;
+      const key = `${h.id}:${r.id}`;
+      if (reactionSeen.has(key)) continue;
+      reactionSeen.add(key);
+      reactionRows.push({ highlightId: h.id, userId: r.id });
+    }
+  }
+  await prisma.highlightReaction.createMany({ data: reactionRows });
+  console.log(`Reactions: ${reactionRows.length}`);
+
+  // Notes & discussion — on the curated (hero) articles, a few readers leave
+  // notes on the pull-quote span, with some replies forming threads.
+  const noteBodies = [
+    "Bunu defalarca okudum, her seferinde başka bir şey buldum.",
+    "Tam da bugün ihtiyacım olan cümle buydu.",
+    "Katılmıyorum ama uzun süre düşündürdü.",
+    "Bir kenara not aldım, unutmak istemiyorum.",
+    "Bu cümle bütün yazıyı özetliyor bence.",
+    "İlk turda atlamışım, ikinci okumada fark ettim.",
+    "Sanki benim için yazılmış.",
+  ];
+  const replyBodies = [
+    "Aynen.",
+    "Bence de.",
+    "Sen de mi? Tuhaf.",
+    "Güzel yakalamışsın.",
+    "Buna bayıldım.",
+    "Hiç böyle düşünmemiştim.",
+  ];
+
+  let noteTotal = 0;
+  let replyTotal = 0;
+  let demoNoted = false;
+  for (const spec of allSpecs) {
+    if (!spec.blocks) continue; // only hero articles have curated prose
+    const data = articleBlocks.get(spec.slug)!;
+    const hotBlock = data.blocks.find((b) => b.text.includes(data.pullQuote));
+    if (!hotBlock) continue;
+    const span = spanFromPhrase(hotBlock.text, data.pullQuote);
+    if (!span || span.start >= span.end) continue;
+    const noteText = hotBlock.text.slice(span.start, span.end);
+
+    // Ensure the demo user authors a note (Notçu badge + populated feed).
+    const authors = sample(users, randInt(1, 3));
+    if (!demoNoted && !authors.some((a) => a.id === demo.id)) authors.push(demo);
+    if (authors.some((a) => a.id === demo.id)) demoNoted = true;
+
+    for (const author of authors) {
+      const top = await prisma.note.create({
+        data: {
+          userId: author.id,
+          blockId: hotBlock.id,
+          articleId: data.articleId,
+          startOffset: span.start,
+          endOffset: span.end,
+          text: noteText,
+          body: pick(noteBodies),
+          createdAt: daysAgo(randInt(0, 12)),
+        },
+      });
+      noteTotal++;
+      for (const replier of sample(users, randInt(0, 2))) {
+        if (replier.id === author.id) continue;
+        await prisma.note.create({
+          data: {
+            userId: replier.id,
+            blockId: hotBlock.id,
+            articleId: data.articleId,
+            startOffset: span.start,
+            endOffset: span.end,
+            text: noteText,
+            body: pick(replyBodies),
+            parentId: top.id,
+            createdAt: daysAgo(randInt(0, 8)),
+          },
+        });
+        replyTotal++;
+      }
+    }
+  }
+  console.log(`Notes: ${noteTotal} (+${replyTotal} yanıt)`);
+
   // Subscriptions
   await prisma.emailSubscription.createMany({
     data: sample(users, 28).map((u, i) => ({
@@ -387,10 +478,15 @@ async function main() {
 
   // A few notifications for the demo user.
   const others = users.slice(1);
+  const reactor = pick(others);
+  const noter = pick(others);
+  const follower = pick(others);
   await prisma.notification.createMany({
     data: [
+      { userId: demo.id, type: "reaction", actorUserId: reactor.id, body: `${reactor.displayName} altını çizdiğin bir cümleye "ben de" dedi.`, link: "/akis" },
+      { userId: demo.id, type: "note", actorUserId: noter.id, body: `${noter.displayName} altını çizdiğin bir cümleye not düştü.`, link: "/akis" },
+      { userId: demo.id, type: "follow", actorUserId: follower.id, body: `${follower.displayName} seni takip etmeye başladı.`, link: `/u/${follower.id}` },
       { userId: demo.id, type: "overlap", actorUserId: pick(others).id, body: `${pick(others).displayName} senin de altını çizdiğin bir cümleyi işaretledi.` },
-      { userId: demo.id, type: "follow", actorUserId: pick(others).id, body: `${pick(others).displayName} seni takip etmeye başladı.` },
       { userId: demo.id, type: "new_article", body: "Sinan Canan'dan yeni bir yazı yayında: Beynin En Büyük Yalanı." },
     ],
   });

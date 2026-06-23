@@ -20,10 +20,12 @@ model User {
   createdAt   DateTime @default(now())
 
   highlights    Highlight[]
-  following     Follow[]       @relation("follower")
-  followers     Follow[]       @relation("followee")
-  notifications Notification[] @relation("recipient")
-  actedOn       Notification[] @relation("actor")
+  following     Follow[]            @relation("follower")
+  followers     Follow[]            @relation("followee")
+  notifications Notification[]      @relation("recipient")
+  actedOn       Notification[]      @relation("actor")
+  reactions     HighlightReaction[]
+  notes         Note[]
 }
 
 /// A Club member / author who publishes one page per day.
@@ -74,6 +76,7 @@ model Article {
 
   blocks     ArticleBlock[]
   highlights Highlight[]
+  notes      Note[]
 
   @@index([publishedAt])
   @@index([publisherId, publishedAt])
@@ -92,6 +95,7 @@ model ArticleBlock {
   article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
 
   highlights Highlight[]
+  notes      Note[]
 
   @@unique([articleId, index])
   @@index([articleId])
@@ -112,6 +116,8 @@ model Highlight {
   block     ArticleBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)
   articleId String
   article   Article      @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  reactions HighlightReaction[]
 
   @@unique([userId, blockId, startOffset, endOffset])
   @@index([blockId])
@@ -143,8 +149,9 @@ model EmailSubscription {
 /// Backs the notification bell.
 model Notification {
   id          String   @id @default(cuid())
-  type        String // 'overlap' | 'follow' | 'new_article'
+  type        String // 'overlap' | 'follow' | 'new_article' | 'reaction' | 'note' | 'reply'
   body        String
+  link        String? // optional deep link target
   read        Boolean  @default(false)
   createdAt   DateTime @default(now())
 
@@ -155,4 +162,47 @@ model Notification {
   articleId   String?
 
   @@index([userId, read])
+}
+
+/// A lightweight "ben de" reaction on another reader's underline.
+model HighlightReaction {
+  id        String   @id @default(cuid())
+  type      String   @default("love")
+  createdAt DateTime @default(now())
+
+  highlightId String
+  highlight   Highlight @relation(fields: [highlightId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([highlightId, userId])
+  @@index([highlightId])
+  @@index([userId])
+}
+
+/// A note anchored to a span of text (block + offsets). A top-level note starts
+/// a discussion on a sentence; a reply (parentId set) inherits the parent span.
+model Note {
+  id          String   @id @default(cuid())
+  body        String
+  startOffset Int
+  endOffset   Int
+  text        String // denormalized span slice
+  createdAt   DateTime @default(now())
+
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blockId   String
+  block     ArticleBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  articleId String
+  article   Article      @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  parentId String?
+  parent   Note?   @relation("NoteReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  Note[]  @relation("NoteReplies")
+
+  @@index([articleId])
+  @@index([blockId, startOffset, endOffset])
+  @@index([userId])
+  @@index([parentId])
 }

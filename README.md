@@ -47,21 +47,47 @@ exact integer offsets — no fuzzy matching, and **no rich-text editor**.
   are surfaced as follow suggestions (interval-overlap self-join in
   `lib/db/queries.ts`).
 
+## Social layer
+
+The reading loop is social end to end:
+
+- **Reactions** — tap "ben de" on any reader's underline (`HighlightReaction`,
+  one per user per highlight). Counts surface on profiles and the feed; the
+  author is notified. `components/ReactionButton.tsx`, `lib/actions/reactions.ts`.
+- **Notes & discussion** — underline a sentence, then leave a note on it;
+  others reply, forming a per-sentence thread. Notes anchor to the span
+  `{ blockId, startOffset, endOffset }`, so everyone who underlined the same
+  words shares one thread (`Note` self-relation for replies). Surfaced in the
+  reader's **Tartışma** section and the highlight sheet.
+  `components/notes/*`, `lib/actions/notes.ts`.
+- **Activity feed (`/akis`)** — what the people you follow recently underlined,
+  noted, and who they followed — merged and time-ordered (`getActivityFeed`).
+- **Profiles & discovery** — follower/following lists (`/u/[id]/baglanti`) with
+  follow buttons and a "seni takip ediyor" mutual badge; **`/kesfet`** ranks
+  "senin gibi okuyanlar" by overlapping underlines; the journal shows reading
+  **streaks** and earnable **badges** (`getReadingStats`).
+- **Notifications** — the bell now carries `reaction` / `note` / `reply` /
+  `follow` events with deep links.
+
 ## Structure
 
 ```
 app/
   page.tsx                         Home: subscribe block · billboard · rails · Club · category rails
-  oku/[publisher]/[slug]/page.tsx  Reader (server heatmap) + <Annotator> client island
+  oku/[publisher]/[slug]/page.tsx  Reader (server heatmap) + <Annotator> + Tartışma (notes)
+  akis/                            Activity feed of people you follow
   alti-cizdiklerin/                My highlights + share-card composer
-  gunlugun/                        Reading journal
+  gunlugun/                        Reading journal · streaks · badges
   arsiv/ · en-cok-alti-cizilenler/ Browse + most-underlined ranking
-  u/[userId]/ · yazar/[slug]/      Reader profile (+follow) · publisher
+  kesfet/                          "Senin gibi okuyanlar" discovery
+  u/[userId]/ · u/[userId]/baglanti/  Reader profile (+follow · reactions) · follower/following
+  yazar/[slug]/                    Publisher
   ara/ · giris/                    Search · allowlist login
   api/quote-card/route.tsx         next/og PNG quote card (1080×1080)
 lib/
   highlights/{offsets,segmentation}.ts   the underlining engine (unit-tested)
   db/queries.ts · actions/*               data access + server actions
+  social-types.ts                         shared feed/note/reaction types
   auth/session.ts                         iron-session allowlist auth
 prisma/{schema.prisma,seed.ts}            data model + synthetic data
 components/                                design system (dark · red · cream)

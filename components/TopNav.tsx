@@ -9,10 +9,11 @@ import { markNotificationsRead } from "@/lib/actions/social";
 import { logoutAction } from "@/lib/actions/auth";
 
 type NavUser = { id: string; displayName: string; avatarSeed: string } | null;
-type Notif = { id: string; body: string; read: boolean };
+type Notif = { id: string; body: string; read: boolean; link?: string | null };
 
 const TABS = [
   { href: "/", label: "Listen" },
+  { href: "/akis", label: "Akış" },
   { href: "/alti-cizdiklerin", label: "Altını Çizdiklerin" },
   { href: "/gunlugun", label: "Günlüğün" },
 ];
@@ -86,11 +87,30 @@ export function TopNav({
                     <p className="px-4 py-6 text-sm text-cream-faint">Henüz bildirim yok.</p>
                   ) : (
                     <ul className="max-h-96 overflow-auto">
-                      {notifications.map((n) => (
-                        <li key={n.id} className="border-b border-white/5 px-4 py-3 text-sm text-cream/90">
-                          {n.body}
-                        </li>
-                      ))}
+                      {notifications.map((n) =>
+                        n.link ? (
+                          <li key={n.id} className="border-b border-white/5">
+                            <Link
+                              href={n.link}
+                              onClick={() => setBellOpen(false)}
+                              className={`block px-4 py-3 text-sm hover:bg-white/5 ${
+                                n.read ? "text-cream/90" : "text-cream"
+                              }`}
+                            >
+                              {n.body}
+                            </Link>
+                          </li>
+                        ) : (
+                          <li
+                            key={n.id}
+                            className={`border-b border-white/5 px-4 py-3 text-sm ${
+                              n.read ? "text-cream/90" : "text-cream"
+                            }`}
+                          >
+                            {n.body}
+                          </li>
+                        ),
+                      )}
                     </ul>
                   )}
                 </div>

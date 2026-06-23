@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Avatar } from "@/components/Avatar";
 import { Gate } from "@/components/Gate";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getJournal } from "@/lib/db/queries";
+import { getJournal, getReadingStats, type Badge } from "@/lib/db/queries";
 import { formatDateLong, relativeDay } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -11,14 +11,10 @@ export default async function JournalPage() {
   const user = await getCurrentUser();
   if (!user) return <Gate title="Günlüğün seni bekliyor." body="Okuduğun, altını çizdiğin her gün burada birikir." />;
 
-  const days = await getJournal(user.id);
-  const totalArticles = new Set(
-    days.flatMap((d) => d.articles.map((a) => a.article.id)),
-  ).size;
-  const totalHighlights = days.reduce(
-    (sum, d) => sum + d.articles.reduce((s, a) => s + a.count, 0),
-    0,
-  );
+  const [days, stats] = await Promise.all([
+    getJournal(user.id),
+    getReadingStats(user.id),
+  ]);
 
   return (
     <div className="mx-auto max-w-2xl px-5 py-12">
@@ -29,10 +25,27 @@ export default async function JournalPage() {
         Okuma günlüğün
       </h1>
 
-      <div className="mt-6 flex gap-8 border-y border-white/10 py-5">
-        <Stat n={days.length} label="gün" />
-        <Stat n={totalArticles} label="yazı" />
-        <Stat n={totalHighlights} label="altı çizili" />
+      {stats.currentStreak > 0 && (
+        <p className="mt-4 font-body text-lg italic text-cream-dim">
+          🔥 <span className="text-red">{stats.currentStreak} gün</span> üst üste okudun
+          {stats.longestStreak > stats.currentStreak && (
+            <span className="text-cream-faint"> · en uzun seri {stats.longestStreak} gün</span>
+          )}
+          .
+        </p>
+      )}
+
+      <div className="mt-6 flex flex-wrap gap-x-8 gap-y-3 border-y border-white/10 py-5">
+        <Stat n={stats.totalDays} label="gün" />
+        <Stat n={stats.totalArticles} label="yazı" />
+        <Stat n={stats.totalHighlights} label="altı çizili" />
+        <Stat n={stats.noteCount} label="not" />
+      </div>
+
+      <div className="mt-6 flex flex-wrap gap-2">
+        {stats.badges.map((b) => (
+          <BadgeChip key={b.key} badge={b} />
+        ))}
       </div>
 
       {days.length === 0 ? (
@@ -85,5 +98,21 @@ function Stat({ n, label }: { n: number; label: string }) {
       <span className="font-display text-3xl font-700 text-cream">{n}</span>
       <span className="ml-2 font-body italic text-cream-dim">{label}</span>
     </div>
+  );
+}
+
+function BadgeChip({ badge }: { badge: Badge }) {
+  return (
+    <span
+      title={badge.hint}
+      className={`rounded-full border px-3 py-1 font-label text-[10px] uppercase tracking-[0.12em] ${
+        badge.earned
+          ? "border-red bg-red/10 text-red"
+          : "border-white/10 text-cream-faint opacity-60"
+      }`}
+    >
+      {badge.earned ? "★ " : ""}
+      {badge.label}
+    </span>
   );
 }

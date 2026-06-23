@@ -7,6 +7,7 @@ import { readSelection, snapToWords } from "@/lib/highlights/offsets";
 import { intensityBand, type Segment } from "@/lib/highlights/segmentation";
 import { createHighlight, deleteHighlight } from "@/lib/actions/highlights";
 import { HighlightSheet } from "@/components/reader/HighlightSheet";
+import type { NoteThreadView } from "@/lib/social-types";
 
 export type ReaderBlock = {
   id: string;
@@ -29,16 +30,18 @@ type Pending = {
   left: number;
 };
 
-type ActiveMark = { id: string; text: string };
+type ActiveMark = { id: string; text: string; blockId: string; start: number; end: number };
 
 export function Annotator({
   blocks,
   isLoggedIn,
   article,
+  noteThreads,
 }: {
   blocks: ReaderBlock[];
   isLoggedIn: boolean;
-  article: { title: string; publisherName: string };
+  article: { id: string; title: string; publisherName: string };
+  noteThreads: NoteThreadView[];
 }) {
   const router = useRouter();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -46,6 +49,11 @@ export function Annotator({
   const [pending, setPending] = useState<Pending | null>(null);
   const [busy, setBusy] = useState(false);
   const [activeMark, setActiveMark] = useState<ActiveMark | null>(null);
+
+  const notesFor = (blockId: string, start: number, end: number) =>
+    noteThreads.find(
+      (t) => t.blockId === blockId && t.start === start && t.end === end,
+    )?.notes ?? [];
 
   const blockText = useCallback(
     (blockId: string) => blocks.find((b) => b.id === blockId)?.text ?? "",
@@ -133,7 +141,15 @@ export function Annotator({
           <p key={b.id} data-block-id={b.id} className="select-text">
             {view === "everyone"
               ? renderHeatmap(b)
-              : renderMine(b, (m) => setActiveMark({ id: m.id, text: b.text.slice(m.start, m.end) }))}
+              : renderMine(b, (m) =>
+                  setActiveMark({
+                    id: m.id,
+                    text: b.text.slice(m.start, m.end),
+                    blockId: b.id,
+                    start: m.start,
+                    end: m.end,
+                  }),
+                )}
           </p>
         ))}
       </div>
@@ -167,7 +183,16 @@ export function Annotator({
         <HighlightSheet
           highlightId={activeMark.id}
           text={activeMark.text}
-          article={article}
+          article={{ title: article.title, publisherName: article.publisherName }}
+          span={{
+            blockId: activeMark.blockId,
+            articleId: article.id,
+            start: activeMark.start,
+            end: activeMark.end,
+            text: activeMark.text,
+          }}
+          notes={notesFor(activeMark.blockId, activeMark.start, activeMark.end)}
+          canPost={isLoggedIn}
           onClose={() => setActiveMark(null)}
           onDelete={() => removeMark(activeMark.id)}
         />

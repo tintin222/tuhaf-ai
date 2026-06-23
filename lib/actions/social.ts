@@ -26,9 +26,11 @@ export async function toggleFollow(targetId: string): Promise<{ following: boole
       type: "follow",
       actorUserId: user.id,
       body: `${user.displayName} seni takip etmeye başladı.`,
+      link: `/u/${user.id}`,
     },
   });
   revalidatePath(`/u/${targetId}`);
+  revalidatePath(`/u/${user.id}`);
   return { following: true };
 }
 

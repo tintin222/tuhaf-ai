@@ -38,3 +38,17 @@ export function relativeDay(date: Date): string {
   if (diff < 7) return `${diff} gün önce`;
   return formatDateLong(date);
 }
+
+/** Compact relative time, e.g. "az önce", "3 sa", "2 g". */
+export function timeAgo(input: Date | string): string {
+  const date = new Date(input);
+  const sec = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (sec < 60) return "az önce";
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min} dk`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr} sa`;
+  const day = Math.floor(hr / 24);
+  if (day < 7) return `${day} g`;
+  return formatDateLong(date);
+}

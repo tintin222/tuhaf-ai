@@ -45,7 +45,7 @@ export default async function RootLayout({
         <TopNav
           user={user ? { id: user.id, displayName: user.displayName, avatarSeed: user.avatarSeed } : null}
           unread={unread}
-          notifications={notifications.map((n) => ({ id: n.id, body: n.body, read: n.read }))}
+          notifications={notifications.map((n) => ({ id: n.id, body: n.body, read: n.read, link: n.link }))}
         />
         <main className="min-h-screen">{children}</main>
         <footer className="border-t border-white/10 px-5 py-10 text-center font-label text-xs uppercase tracking-[0.2em] text-cream-faint">
