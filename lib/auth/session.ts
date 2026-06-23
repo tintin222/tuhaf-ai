@@ -32,12 +32,11 @@ export async function getCurrentUser() {
   const user = await prisma.user.findUnique({
     where: { id: session.userId },
   });
-  if (!user) {
-    // Stale cookie pointing at a deleted user.
-    session.destroy();
-    return null;
-  }
-  return user;
+  // A stale cookie (e.g. user removed, or DB reseeded with fresh IDs) just
+  // reads as logged-out. We must NOT mutate the cookie here: getCurrentUser
+  // runs in Server Components (layout/pages), where cookie writes throw.
+  // The stale cookie is overwritten on the next successful login.
+  return user ?? null;
 }
 
 /** Allowlist login: only seeded/known emails may enter. Returns the user or
