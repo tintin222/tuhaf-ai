@@ -1,0 +1,158 @@
+// Tuhaf Club — data model.
+// SQLite for local/synthetic-data dev; kept Postgres-portable:
+// app-generated cuid IDs, no SQLite-only features, ISO/DateTime timestamps.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// A reader. Auth is a simple allowlist: known email -> session.
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  displayName String
+  avatarSeed  String
+  createdAt   DateTime @default(now())
+
+  highlights    Highlight[]
+  following     Follow[]       @relation("follower")
+  followers     Follow[]       @relation("followee")
+  notifications Notification[] @relation("recipient")
+  actedOn       Notification[] @relation("actor")
+}
+
+/// A Club member / author who publishes one page per day.
+model Publisher {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  name        String
+  title       String // e.g. "Nörobilim", "Gastronomi"
+  category    String
+  bio         String
+  avatarSeed  String
+  accentColor String  @default("#D9291C")
+
+  articles Article[]
+}
+
+/// A brand sponsoring a category rail (logo embedded in the rail title).
+model Sponsor {
+  id       String  @id @default(cuid())
+  slug     String  @unique
+  name     String
+  logoText String // wordmark rendered in brand style
+  category String
+
+  articles Article[]
+}
+
+model Article {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  title         String
+  subject       String // dek / standfirst
+  category      String
+  pullQuote     String
+  readMinutes   Int      @default(4)
+  listenSeconds Int      @default(240)
+  audioUrl      String?
+  posterTheme   String   @default("crimson") // poster color key
+  status        String   @default("published") // 'draft' | 'published'
+  isLive        Boolean  @default(false) // "Şimdi Yayında" billboard pick
+  publishedAt   DateTime
+  createdAt     DateTime @default(now())
+
+  publisherId String
+  publisher   Publisher @relation(fields: [publisherId], references: [id])
+  sponsorId   String?
+  sponsor     Sponsor?  @relation(fields: [sponsorId], references: [id])
+
+  blocks     ArticleBlock[]
+  highlights Highlight[]
+
+  @@index([publishedAt])
+  @@index([publisherId, publishedAt])
+  @@index([category])
+}
+
+/// One ordered block of canonical (NFC-normalized) text.
+/// The stored `text` is THE coordinate system for highlight offsets.
+model ArticleBlock {
+  id    String @id @default(cuid())
+  index Int
+  type  String @default("paragraph") // 'paragraph' | 'heading' | 'blockquote'
+  text  String
+
+  articleId String
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  highlights Highlight[]
+
+  @@unique([articleId, index])
+  @@index([articleId])
+}
+
+/// A reader's underline, scoped to a single block.
+/// Offsets are UTF-16 code units into the block's canonical text, word-snapped.
+model Highlight {
+  id          String   @id @default(cuid())
+  startOffset Int
+  endOffset   Int // exclusive
+  text        String // denormalized slice (quote cards / drift check)
+  createdAt   DateTime @default(now())
+
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blockId   String
+  block     ArticleBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  articleId String
+  article   Article      @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, blockId, startOffset, endOffset])
+  @@index([blockId])
+  @@index([articleId])
+  @@index([userId])
+  @@index([articleId, userId])
+}
+
+/// Directed social graph edge.
+model Follow {
+  followerId String
+  follower   User   @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  followeeId String
+  followee   User   @relation("followee", fields: [followeeId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@id([followerId, followeeId])
+  @@index([followeeId])
+}
+
+/// "Abone Ol" newsletter signup.
+model EmailSubscription {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  status    String   @default("confirmed") // 'pending' | 'confirmed' | 'unsubscribed'
+  createdAt DateTime @default(now())
+}
+
+/// Backs the notification bell.
+model Notification {
+  id          String   @id @default(cuid())
+  type        String // 'overlap' | 'follow' | 'new_article'
+  body        String
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  userId      String
+  user        User     @relation("recipient", fields: [userId], references: [id], onDelete: Cascade)
+  actorUserId String?
+  actor       User?    @relation("actor", fields: [actorUserId], references: [id])
+  articleId   String?
+
+  @@index([userId, read])
+}

@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  background-color: #101010;
+  color: #f4ede2;
+  font-feature-settings: "liga" 1, "kern" 1;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Hide scrollbars on horizontal rails while keeping scroll. */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Heatmap intensity bands — increasing alpha of Tuhaf red. */
+.hl-band-0 {
+  background: transparent;
+}
+.hl-band-1 {
+  background: rgba(217, 41, 28, 0.16);
+}
+.hl-band-2 {
+  background: rgba(217, 41, 28, 0.32);
+}
+.hl-band-3 {
+  background: rgba(217, 41, 28, 0.52);
+}
+.hl-band-4 {
+  background: rgba(217, 41, 28, 0.74);
+  color: #fff;
+}
+
+/* A reader's own underline. */
+.hl-mine {
+  background: linear-gradient(transparent 62%, rgba(217, 41, 28, 0.42) 0);
+  border-bottom: 2px solid #d9291c;
+  cursor: pointer;
+}
+.hl-mine:hover {
+  background: linear-gradient(transparent 62%, rgba(217, 41, 28, 0.6) 0);
+}
+
+/* A specific other reader's underline (profile peek). */
+.hl-peer {
+  background: linear-gradient(transparent 62%, rgba(217, 41, 28, 0.3) 0);
+}
+
+::selection {
+  background: rgba(217, 41, 28, 0.4);
+  color: #fff;
+}
+
+.reader-prose p {
+  margin-bottom: 1.4rem;
+}
