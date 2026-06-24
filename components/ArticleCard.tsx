@@ -1,9 +1,10 @@
-import Link from "next/link";
 import { Avatar } from "@/components/Avatar";
+import { TrackedLink } from "@/components/TrackedLink";
 import { TuhafBadge } from "@/components/TuhafLogo";
 import { getTheme } from "@/lib/themes";
 
 export type CardArticle = {
+  id: string;
   slug: string;
   title: string;
   subject: string;
@@ -24,8 +25,10 @@ export function ArticleCard({
 }) {
   const theme = getTheme(article.posterTheme);
   return (
-    <Link
+    <TrackedLink
       href={`/oku/${article.publisher.slug}/${article.slug}`}
+      articleId={article.id}
+      label="card"
       className={`group relative flex ${width} shrink-0 flex-col justify-between overflow-hidden rounded-xl border border-white/10 p-5 transition-transform duration-200 hover:-translate-y-1 hover:border-white/25`}
       style={{
         background: `linear-gradient(160deg, ${theme.bgFrom}, ${theme.bgTo})`,
@@ -63,6 +66,6 @@ export function ArticleCard({
           </span>
         </div>
       </div>
-    </Link>
+    </TrackedLink>
   );
 }

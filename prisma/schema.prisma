@@ -24,6 +24,7 @@ model User {
   location    String?
   interests   String   @default("[]") // JSON array of category keys
   onboarded   Boolean  @default(false)
+  isAdmin     Boolean  @default(false)
   createdAt   DateTime @default(now())
 
   highlights    Highlight[]
@@ -213,4 +214,30 @@ model Note {
   @@index([blockId, startOffset, endOffset])
   @@index([userId])
   @@index([parentId])
+}
+
+/// Editorial category, managed from the admin dashboard. Articles still store
+/// `category` as a denormalized string; this table drives the picker + ordering.
+model Category {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  accent    String   @default("#D9291C")
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+/// Lightweight analytics event (open / listen / click). articleId & userId are
+/// stored as plain columns (no FK) so events survive content/user churn.
+model Event {
+  id        String   @id @default(cuid())
+  type      String // 'open' | 'listen' | 'click'
+  articleId String?
+  userId    String?
+  label     String? // e.g. click target ('card', 'oku', 'dinle', 'share')
+  createdAt DateTime @default(now())
+
+  @@index([type])
+  @@index([articleId])
+  @@index([createdAt])
 }

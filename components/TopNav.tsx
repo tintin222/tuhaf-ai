@@ -8,7 +8,7 @@ import { Avatar } from "@/components/Avatar";
 import { markNotificationsRead } from "@/lib/actions/social";
 import { logoutAction } from "@/lib/actions/auth";
 
-type NavUser = { id: string; displayName: string; avatarSeed: string; image?: string | null } | null;
+type NavUser = { id: string; displayName: string; avatarSeed: string; image?: string | null; isAdmin?: boolean } | null;
 type Notif = { id: string; body: string; read: boolean; link?: string | null };
 
 const TABS = [
@@ -131,6 +131,11 @@ export function TopNav({
                   <Link href="/profil" className="block px-4 py-3 text-sm text-cream hover:bg-white/5">
                     Profilini düzenle
                   </Link>
+                  {user.isAdmin && (
+                    <Link href="/admin" className="block px-4 py-3 text-sm text-red hover:bg-white/5">
+                      Yönetim Paneli
+                    </Link>
+                  )}
                   <form action={logoutAction}>
                     <button className="block w-full px-4 py-3 text-left text-sm text-cream-dim hover:bg-white/5">
                       Çıkış yap

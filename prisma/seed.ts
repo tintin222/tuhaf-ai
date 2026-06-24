@@ -243,6 +243,19 @@ async function main() {
     pubBySlug.set(p.slug, row.id);
   }
 
+  // Categories (drive the admin content picker). Seeded from publisher categories.
+  const catSlug = (name: string) =>
+    name.toLocaleLowerCase("tr")
+      .replace(/ç/g, "c").replace(/ş/g, "s").replace(/ğ/g, "g")
+      .replace(/ı/g, "i").replace(/ö/g, "o").replace(/ü/g, "u")
+      .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const distinctCategories = [...new Set(PUBLISHERS.map((p) => p.category))];
+  for (let i = 0; i < distinctCategories.length; i++) {
+    const name = distinctCategories[i]!;
+    await prisma.category.create({ data: { name, slug: catSlug(name), order: i } });
+  }
+  console.log(`Categories: ${distinctCategories.length}`);
+
   // Sponsors
   const sponsorByCategory = new Map<string, string>();
   for (const s of SPONSORS) {
@@ -258,6 +271,7 @@ async function main() {
       displayName: "Efe",
       avatarSeed: "efe@infinics.xyz",
       onboarded: true,
+      isAdmin: true,
       bio: "Tuhaf Club'ın ilk okuru. Altını çizdiklerini biriktirir.",
       age: 29,
       gender: "erkek",
@@ -545,6 +559,35 @@ async function main() {
       { userId: demo.id, type: "new_article", body: "Sinan Canan'dan yeni bir yazı yayında: Beynin En Büyük Yalanı." },
     ],
   });
+
+  // Analytics events — synthetic opens / listens / clicks so the admin
+  // dashboard has data. Popular (live/hero) articles get more traffic.
+  const eventRows: {
+    type: string;
+    articleId: string;
+    userId: string | null;
+    label: string | null;
+    createdAt: Date;
+  }[] = [];
+  for (const spec of allSpecs) {
+    const data = articleBlocks.get(spec.slug)!;
+    const base = spec.live ? 120 : spec.blocks ? randInt(30, 90) : randInt(5, 40);
+    const someUser = () => (rand() < 0.6 ? pick(users).id : null);
+    for (let i = 0; i < base; i++) {
+      eventRows.push({ type: "open", articleId: data.articleId, userId: someUser(), label: null, createdAt: daysAgo(randInt(0, 20)) });
+    }
+    const listens = Math.floor(base * (0.2 + rand() * 0.2));
+    for (let i = 0; i < listens; i++) {
+      eventRows.push({ type: "listen", articleId: data.articleId, userId: someUser(), label: null, createdAt: daysAgo(randInt(0, 20)) });
+    }
+    const clicks = Math.floor(base * (0.5 + rand() * 0.5));
+    for (let i = 0; i < clicks; i++) {
+      const label = pick(["card", "card", "card", "billboard-oku", "billboard-dinle"]);
+      eventRows.push({ type: "click", articleId: data.articleId, userId: someUser(), label, createdAt: daysAgo(randInt(0, 20)) });
+    }
+  }
+  await prisma.event.createMany({ data: eventRows });
+  console.log(`Events: ${eventRows.length}`);
 
   console.log("\nDone. Sample logins (allowlist):");
   console.log("  efe@infinics.xyz   (demo user — full profile, highlights, notes)");

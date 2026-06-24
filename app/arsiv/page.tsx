@@ -6,9 +6,10 @@ export const dynamic = "force-dynamic";
 
 function toCard(a: any): CardArticle {
   return {
+    id: a.id,
     slug: a.slug, title: a.title, subject: a.subject, pullQuote: a.pullQuote,
     readMinutes: a.readMinutes, category: a.category, posterTheme: a.posterTheme,
-    publisher: { slug: a.publisher.slug, name: a.publisher.name, title: a.publisher.title, avatarSeed: a.publisher.avatarSeed },
+    publisher: { slug: a.publisher.slug, name: a.publisher.name, title: a.publisher.title, avatarSeed: a.publisher.avatarSeed, image: a.publisher.image },
     sponsor: a.sponsor ? { name: a.sponsor.name, logoText: a.sponsor.logoText } : null,
   };
 }

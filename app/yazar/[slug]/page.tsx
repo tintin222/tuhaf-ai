@@ -24,9 +24,10 @@ export default async function PublisherPage({
   if (!publisher) notFound();
 
   const cards: CardArticle[] = publisher.articles.map((a) => ({
+    id: a.id,
     slug: a.slug, title: a.title, subject: a.subject, pullQuote: a.pullQuote,
     readMinutes: a.readMinutes, category: a.category, posterTheme: a.posterTheme,
-    publisher: { slug: publisher.slug, name: publisher.name, title: publisher.title, avatarSeed: publisher.avatarSeed },
+    publisher: { slug: publisher.slug, name: publisher.name, title: publisher.title, avatarSeed: publisher.avatarSeed, image: publisher.image },
     sponsor: a.sponsor ? { name: a.sponsor.name, logoText: a.sponsor.logoText } : null,
   }));
 

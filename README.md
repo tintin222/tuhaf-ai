@@ -93,6 +93,36 @@ prisma/{schema.prisma,seed.ts}            data model + synthetic data
 components/                                design system (dark · red · cream)
 ```
 
+## Profiles & onboarding
+
+- Users and Club members have real **photos**: `Avatar` prefers an `image`
+  (uploaded base64 data URL for users, `/club/<slug>.<ext>` for publishers) and
+  falls back to the generated avatar. `ImagePicker` crops/downscales client-side.
+- Profile fields: bio, age, gender, location, interests. First login routes to
+  **onboarding** (`/hosgeldin`); editing reuses the same form at `/profil`.
+- Drop Club photos into `public/club/<slug>.jpg` and reseed (see that folder's
+  README). `yeni@tuhaf.test` is a fresh account that triggers onboarding.
+
+## Admin dashboard (`/admin`)
+
+Gated to users with `isAdmin` (the seed makes `efe@infinics.xyz` an admin; the
+nav shows a "Yönetim Paneli" link for them).
+
+- **İçerik** — list / create / edit / delete articles. The body is a plain
+  textarea: blank line = new block, `#` = heading, `>` = blockquote; text is
+  NFC-normalized into `ArticleBlock`s (the highlight coordinate system). Pick
+  publisher + category, theme, status, billboard "live" toggle, dates.
+- **Kategoriler** — CRUD the `Category` table that drives the content picker.
+- **Seslendirme** — upload a voice recording (`POST /api/admin/audio` →
+  `/public/audio`, admin-only) or paste an audio URL; stored as the article's
+  `audioUrl`. (Local/persistent-disk hosts work as-is; on Vercel swap in blob
+  storage.)
+- **Genel Bakış** — analytics from a lightweight `Event` model: totals plus
+  **most-opened / most-listened content** and a **click breakdown**. Tracking is
+  fire-and-forget via `lib/track.ts` → `POST /api/track`: `open` on reader mount
+  (`TrackOpen`), `listen` on first play (`AudioPlayer`), `click` on cards and
+  billboard CTAs (`TrackedLink`). Seeded with synthetic events so it's populated.
+
 ## Design tokens
 
 Background `#101010`, Tuhaf red `#D9291C`, cream `#F4EDE2`. Headlines Playfair

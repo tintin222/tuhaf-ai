@@ -4,6 +4,7 @@ import { Avatar } from "@/components/Avatar";
 import { Annotator } from "@/components/reader/Annotator";
 import { AudioPlayer } from "@/components/reader/AudioPlayer";
 import { Discussion } from "@/components/notes/Discussion";
+import { TrackOpen } from "@/components/TrackOpen";
 import {
   getArticleForReader,
   getArticleNotes,
@@ -32,6 +33,7 @@ export default async function ReaderPage({
 
   return (
     <article className="mx-auto max-w-reader px-5 py-12">
+      <TrackOpen articleId={article.id} />
       <header className="mb-10">
         <p className="font-label text-xs uppercase tracking-[0.18em] text-cream-dim">
           {formatDateWithDay(new Date(article.publishedAt))}
@@ -106,6 +108,7 @@ export default async function ReaderPage({
           audioUrl={article.audioUrl}
           listenSeconds={article.listenSeconds}
           title={article.title}
+          articleId={article.id}
         />
       </div>
     </article>

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { formatDuration } from "@/lib/format";
+import { track } from "@/lib/track";
 
 /** Sticky "Dinle" player. Functional against an <audio> element; when no
  * audioUrl is seeded it shows a "yakında" (coming soon) state. */
@@ -9,14 +10,17 @@ export function AudioPlayer({
   audioUrl,
   listenSeconds,
   title,
+  articleId,
 }: {
   audioUrl: string | null;
   listenSeconds: number;
   title: string;
+  articleId?: string;
 }) {
   const ref = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
   const [t, setT] = useState(0);
+  const listened = useRef(false);
   const duration = listenSeconds;
 
   useEffect(() => {
@@ -39,7 +43,15 @@ export function AudioPlayer({
       el.pause();
       setPlaying(false);
     } else {
-      el.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+      el.play()
+        .then(() => {
+          setPlaying(true);
+          if (!listened.current) {
+            listened.current = true; // count one listen per page view
+            track("listen", { articleId });
+          }
+        })
+        .catch(() => setPlaying(false));
     }
   };
 

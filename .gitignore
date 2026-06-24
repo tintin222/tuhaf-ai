@@ -34,3 +34,7 @@ prisma/dev.db-journal
 
 # vitest
 /coverage
+
+# uploaded audio (keep folder, ignore files)
+/public/audio/*
+!/public/audio/.gitkeep

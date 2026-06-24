@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { TrackedLink } from "@/components/TrackedLink";
 import { Avatar } from "@/components/Avatar";
 import { getTheme } from "@/lib/themes";
 import { formatDuration } from "@/lib/format";
@@ -40,18 +40,22 @@ export function Billboard({ article }: { article: BillboardArticle }) {
           </div>
 
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link
+            <TrackedLink
               href={href}
+              articleId={article.id}
+              label="billboard-oku"
               className="rounded-full bg-red px-7 py-3 font-label text-sm uppercase tracking-[0.15em] text-cream transition-colors hover:bg-red-dark"
             >
               Oku → {article.readMinutes} dk
-            </Link>
-            <Link
+            </TrackedLink>
+            <TrackedLink
               href={`${href}?mode=dinle`}
+              articleId={article.id}
+              label="billboard-dinle"
               className="rounded-full border border-cream/30 px-7 py-3 font-label text-sm uppercase tracking-[0.15em] text-cream transition-colors hover:border-cream"
             >
               ▍▍ Dinle · {formatDuration(article.listenSeconds)}
-            </Link>
+            </TrackedLink>
           </div>
         </div>
 
