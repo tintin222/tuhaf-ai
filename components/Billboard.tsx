@@ -30,7 +30,7 @@ export function Billboard({ article }: { article: BillboardArticle }) {
           </p>
 
           <div className="mt-6 flex items-center gap-3">
-            <Avatar seed={article.publisher.avatarSeed} name={article.publisher.name} size={40} />
+            <Avatar seed={article.publisher.avatarSeed} name={article.publisher.name} image={article.publisher.image} size={40} />
             <div>
               <p className="font-body italic text-cream">{article.publisher.name}</p>
               <p className="font-label text-[11px] uppercase tracking-[0.15em] text-cream-faint">

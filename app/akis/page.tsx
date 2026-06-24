@@ -56,7 +56,7 @@ function FeedRow({ item, canReact }: { item: FeedItem; canReact: boolean }) {
   if (item.kind === "follow") {
     return (
       <div className="flex items-center gap-3 rounded-xl border border-white/10 px-5 py-4">
-        <Avatar seed={item.actor.avatarSeed} name={item.actor.displayName} size={32} />
+        <Avatar seed={item.actor.avatarSeed} name={item.actor.displayName} image={item.actor.image} size={32} />
         <p className="font-body text-sm text-cream/90">
           <Link href={`/u/${item.actor.id}`} className="italic text-cream hover:text-red">
             {item.actor.displayName}
@@ -79,7 +79,7 @@ function FeedRow({ item, canReact }: { item: FeedItem; canReact: boolean }) {
   if (item.kind === "note") {
     return (
       <div className="rounded-xl border border-white/10 p-5">
-        <Header actorId={item.actor.id} name={item.actor.displayName} seed={item.actor.avatarSeed} verb="not bıraktı" createdAt={item.createdAt} />
+        <Header actorId={item.actor.id} name={item.actor.displayName} seed={item.actor.avatarSeed} image={item.actor.image} verb="not bıraktı" createdAt={item.createdAt} />
         <blockquote className="mt-3 border-l-2 border-red/60 pl-3 font-display text-base italic text-cream-dim">
           “{item.text}”
         </blockquote>
@@ -98,7 +98,7 @@ function FeedRow({ item, canReact }: { item: FeedItem; canReact: boolean }) {
   return (
     <div>
       <div className="mb-2">
-        <Header actorId={item.actor.id} name={item.actor.displayName} seed={item.actor.avatarSeed} verb="altını çizdi" createdAt={item.createdAt} />
+        <Header actorId={item.actor.id} name={item.actor.displayName} seed={item.actor.avatarSeed} image={item.actor.image} verb="altını çizdi" createdAt={item.createdAt} />
       </div>
       <HighlightCard
         highlightId={item.highlightId}
@@ -117,18 +117,20 @@ function Header({
   actorId,
   name,
   seed,
+  image,
   verb,
   createdAt,
 }: {
   actorId: string;
   name: string;
   seed: string;
+  image?: string | null;
   verb: string;
   createdAt: string;
 }) {
   return (
     <div className="flex items-center gap-2">
-      <Avatar seed={seed} name={name} size={28} />
+      <Avatar seed={seed} name={name} image={image} size={28} />
       <p className="font-body text-sm text-cream/90">
         <Link href={`/u/${actorId}`} className="italic text-cream hover:text-red">
           {name}

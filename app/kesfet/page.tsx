@@ -40,6 +40,7 @@ export default async function DiscoverPage() {
                 id={r.id}
                 displayName={r.displayName}
                 avatarSeed={r.avatarSeed}
+                image={r.image}
                 viewerFollows={r.viewerFollows}
                 isSelf={false}
                 showFollow

@@ -4,6 +4,7 @@ export type ActorLite = {
   id: string;
   displayName: string;
   avatarSeed: string;
+  image?: string | null;
 };
 
 export type ReactionInfo = {

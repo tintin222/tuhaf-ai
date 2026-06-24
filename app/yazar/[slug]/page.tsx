@@ -33,7 +33,7 @@ export default async function PublisherPage({
   return (
     <div className="mx-auto max-w-shell px-5 py-12">
       <div className="flex items-center gap-5">
-        <Avatar seed={publisher.avatarSeed} name={publisher.name} size={80} />
+        <Avatar seed={publisher.avatarSeed} name={publisher.name} image={publisher.image} size={80} />
         <div>
           <h1 className="font-display text-4xl font-700 text-cream">{publisher.name}</h1>
           <p className="font-label text-xs uppercase tracking-[0.15em] text-red">{publisher.title}</p>

@@ -89,7 +89,7 @@ export default async function Home() {
         articles={trending.map(toCard)}
       />
 
-      <ClubRail members={members.map((m) => ({ slug: m.slug, name: m.name, title: m.title, avatarSeed: m.avatarSeed }))} />
+      <ClubRail members={members.map((m) => ({ slug: m.slug, name: m.name, title: m.title, avatarSeed: m.avatarSeed, image: m.image }))} />
 
       {rails.map((r) => (
         <Rail

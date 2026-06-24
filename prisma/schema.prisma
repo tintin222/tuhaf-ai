@@ -17,6 +17,13 @@ model User {
   email       String   @unique
   displayName String
   avatarSeed  String
+  image       String? // uploaded photo as a data URL (base64), or null -> generated avatar
+  bio         String?
+  age         Int?
+  gender      String? // 'kadin' | 'erkek' | 'diger' | 'belirtmek-istemiyorum'
+  location    String?
+  interests   String   @default("[]") // JSON array of category keys
+  onboarded   Boolean  @default(false)
   createdAt   DateTime @default(now())
 
   highlights    Highlight[]
@@ -37,6 +44,7 @@ model Publisher {
   category    String
   bio         String
   avatarSeed  String
+  image       String? // /club/<slug>.jpg if present in /public, else null -> generated avatar
   accentColor String  @default("#D9291C")
 
   articles Article[]

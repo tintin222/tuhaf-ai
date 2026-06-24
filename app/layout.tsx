@@ -43,7 +43,7 @@ export default async function RootLayout({
     <html lang="tr" className={`${display.variable} ${body.variable} ${label.variable}`}>
       <body className="font-body antialiased">
         <TopNav
-          user={user ? { id: user.id, displayName: user.displayName, avatarSeed: user.avatarSeed } : null}
+          user={user ? { id: user.id, displayName: user.displayName, avatarSeed: user.avatarSeed, image: user.image } : null}
           unread={unread}
           notifications={notifications.map((n) => ({ id: n.id, body: n.body, read: n.read, link: n.link }))}
         />

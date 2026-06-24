@@ -89,6 +89,7 @@ export async function addNote(input: AddNoteInput): Promise<AddNoteResult> {
         id: user.id,
         displayName: user.displayName,
         avatarSeed: user.avatarSeed,
+        image: user.image ?? null,
       },
       replies: [],
     },

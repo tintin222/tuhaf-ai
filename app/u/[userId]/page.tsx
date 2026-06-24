@@ -10,6 +10,7 @@ import {
   isFollowing,
 } from "@/lib/db/queries";
 import { getCurrentUser } from "@/lib/auth/session";
+import { parseInterests, genderLabel } from "@/lib/profile";
 
 export const dynamic = "force-dynamic";
 
@@ -39,7 +40,7 @@ export default async function ProfilePage({
   return (
     <div className="mx-auto max-w-2xl px-5 py-12">
       <div className="flex items-center gap-5">
-        <Avatar seed={profile.avatarSeed} name={profile.displayName} size={72} />
+        <Avatar seed={profile.avatarSeed} name={profile.displayName} image={profile.image} size={72} />
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <h1 className="font-display text-3xl font-700 text-cream">{profile.displayName}</h1>
@@ -64,13 +65,55 @@ export default async function ProfilePage({
         )}
       </div>
 
+      {(() => {
+        const interests = parseInterests(profile.interests);
+        const metaBits = [
+          profile.age ? `${profile.age}` : null,
+          genderLabel(profile.gender),
+          profile.location,
+        ].filter(Boolean) as string[];
+        if (!profile.bio && metaBits.length === 0 && interests.length === 0) return null;
+        return (
+          <div className="mt-5 space-y-3">
+            {profile.bio && (
+              <p className="font-body text-lg italic text-cream-dim">{profile.bio}</p>
+            )}
+            {metaBits.length > 0 && (
+              <p className="font-label text-[11px] uppercase tracking-[0.14em] text-cream-faint">
+                {metaBits.join(" · ")}
+              </p>
+            )}
+            {interests.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {interests.map((i) => (
+                  <span
+                    key={i}
+                    className="rounded-full border border-white/15 px-3 py-1 font-label text-[10px] uppercase tracking-[0.1em] text-cream-dim"
+                  >
+                    {i}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
       {isSelf && (
-        <Link
-          href="/kesfet"
-          className="mt-6 inline-block rounded-full border border-white/15 px-4 py-2 font-label text-[11px] uppercase tracking-[0.14em] text-cream-dim hover:border-red hover:text-red"
-        >
-          Senin gibi okuyanları keşfet →
-        </Link>
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Link
+            href="/profil"
+            className="rounded-full bg-red px-4 py-2 font-label text-[11px] uppercase tracking-[0.14em] text-cream hover:bg-red-dark"
+          >
+            Profilini düzenle
+          </Link>
+          <Link
+            href="/kesfet"
+            className="rounded-full border border-white/15 px-4 py-2 font-label text-[11px] uppercase tracking-[0.14em] text-cream-dim hover:border-red hover:text-red"
+          >
+            Senin gibi okuyanları keşfet →
+          </Link>
+        </div>
       )}
 
       {shared.length > 0 && (

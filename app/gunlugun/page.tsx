@@ -70,7 +70,7 @@ export default async function JournalPage() {
                       href={`/oku/${article.publisher.slug}/${article.slug}`}
                       className="flex items-center gap-3 rounded-xl border border-white/10 p-4 hover:border-white/25"
                     >
-                      <Avatar seed={article.publisher.avatarSeed} name={article.publisher.name} size={36} />
+                      <Avatar seed={article.publisher.avatarSeed} name={article.publisher.name} image={article.publisher.image} size={36} />
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-display text-lg text-cream">{article.title}</p>
                         <p className="font-label text-[10px] uppercase tracking-[0.14em] text-cream-faint">

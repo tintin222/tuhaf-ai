@@ -45,7 +45,7 @@ export default async function ReaderPage({
         <p className="mt-5 font-body text-xl italic text-cream-dim">{article.subject}</p>
 
         <div className="mt-6 flex items-center gap-3 border-y border-white/10 py-4">
-          <Avatar seed={article.publisher.avatarSeed} name={article.publisher.name} size={44} />
+          <Avatar seed={article.publisher.avatarSeed} name={article.publisher.name} image={article.publisher.image} size={44} />
           <div>
             <Link href={`/yazar/${article.publisher.slug}`} className="font-body italic text-cream hover:text-red">
               {article.publisher.name}
@@ -87,7 +87,7 @@ export default async function ReaderPage({
                   href={`/u/${s.id}`}
                   className="flex items-center gap-2 rounded-full border border-white/10 py-1.5 pl-1.5 pr-4 hover:border-red"
                 >
-                  <Avatar seed={s.avatarSeed} name={s.displayName} size={28} />
+                  <Avatar seed={s.avatarSeed} name={s.displayName} image={s.image} size={28} />
                   <span className="font-body text-sm text-cream">{s.displayName}</span>
                   <span className="font-label text-[10px] uppercase tracking-[0.12em] text-red">
                     {s.shared} ortak

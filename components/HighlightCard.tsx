@@ -28,7 +28,7 @@ export function HighlightCard({
     <div className="rounded-xl border border-white/10 p-5">
       {author && (
         <div className="mb-3 flex items-center gap-2">
-          <Avatar seed={author.avatarSeed} name={author.displayName} size={24} />
+          <Avatar seed={author.avatarSeed} name={author.displayName} image={author.image} size={24} />
           <Link
             href={`/u/${author.id}`}
             className="font-body text-sm italic text-cream hover:text-red"

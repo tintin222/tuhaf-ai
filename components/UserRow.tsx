@@ -7,6 +7,7 @@ export function UserRow({
   id,
   displayName,
   avatarSeed,
+  image,
   viewerFollows,
   showFollow,
   isSelf,
@@ -15,6 +16,7 @@ export function UserRow({
   id: string;
   displayName: string;
   avatarSeed: string;
+  image?: string | null;
   viewerFollows: boolean;
   showFollow: boolean;
   isSelf: boolean;
@@ -23,7 +25,7 @@ export function UserRow({
   return (
     <div className="flex items-center gap-3 rounded-xl border border-white/10 px-4 py-3">
       <Link href={`/u/${id}`} className="flex min-w-0 flex-1 items-center gap-3">
-        <Avatar seed={avatarSeed} name={displayName} size={40} />
+        <Avatar seed={avatarSeed} name={displayName} image={image} size={40} />
         <div className="min-w-0">
           <p className="truncate font-body text-base italic text-cream">{displayName}</p>
           {meta && (

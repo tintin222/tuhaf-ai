@@ -20,7 +20,8 @@ export async function loginAction(
         "Bu e-posta listede değil. Tuhaf Club şu an yalnızca davetli okurlara açık.",
     };
   }
-  redirect("/");
+  // First-time login → complete the profile; returning users go home.
+  redirect(user.onboarded ? "/" : "/hosgeldin");
 }
 
 export async function logoutAction(): Promise<void> {

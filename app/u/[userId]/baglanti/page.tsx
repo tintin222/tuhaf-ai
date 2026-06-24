@@ -62,6 +62,7 @@ export default async function ConnectionsPage({
                 id={p.id}
                 displayName={p.displayName}
                 avatarSeed={p.avatarSeed}
+                image={p.image}
                 viewerFollows={p.viewerFollows}
                 isSelf={p.isSelf}
                 showFollow={!!viewer}

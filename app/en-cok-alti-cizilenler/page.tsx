@@ -30,7 +30,7 @@ export default async function MostUnderlinedPage() {
               <span className="w-8 shrink-0 font-display text-3xl font-700 text-cream-faint">
                 {i + 1}
               </span>
-              <Avatar seed={a.publisher.avatarSeed} name={a.publisher.name} size={44} />
+              <Avatar seed={a.publisher.avatarSeed} name={a.publisher.name} image={a.publisher.image} size={44} />
               <div className="min-w-0 flex-1">
                 <p className="truncate font-display text-2xl text-cream">{a.title}</p>
                 <p className="font-label text-[10px] uppercase tracking-[0.14em] text-cream-faint">

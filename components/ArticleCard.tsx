@@ -11,7 +11,7 @@ export type CardArticle = {
   readMinutes: number;
   category: string;
   posterTheme: string;
-  publisher: { slug: string; name: string; title: string; avatarSeed: string };
+  publisher: { slug: string; name: string; title: string; avatarSeed: string; image?: string | null };
   sponsor?: { name: string; logoText: string } | null;
 };
 
@@ -54,7 +54,7 @@ export function ArticleCard({
           {article.pullQuote}
         </p>
         <div className="flex items-center gap-2 border-t border-white/10 pt-3">
-          <Avatar seed={article.publisher.avatarSeed} name={article.publisher.name} size={26} />
+          <Avatar seed={article.publisher.avatarSeed} name={article.publisher.name} image={article.publisher.image} size={26} />
           <span className="font-body text-sm italic text-cream/80">
             {article.publisher.name}
           </span>

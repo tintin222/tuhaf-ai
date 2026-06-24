@@ -1,7 +1,36 @@
 import { PrismaClient } from "@prisma/client";
+import fs from "fs";
 import { normalizeBlockText, snapToWords } from "../lib/highlights/offsets";
 
 const prisma = new PrismaClient();
+
+/** Real Club-member photo if one was dropped into /public/club/<slug>.<ext>. */
+function clubImage(slug: string): string | null {
+  for (const ext of ["jpg", "jpeg", "png", "webp"]) {
+    if (fs.existsSync(`public/club/${slug}.${ext}`)) return `/club/${slug}.${ext}`;
+  }
+  return null;
+}
+
+/* Synthetic profile data for seeded readers. */
+const CITIES = [
+  "İstanbul", "Ankara", "İzmir", "Bursa", "Antalya", "Eskişehir",
+  "Trabzon", "Gaziantep", "Konya", "Adana", "Muğla", "Çanakkale",
+];
+const PROFILE_GENDERS = ["kadin", "erkek", "diger", "belirtmek-istemiyorum"];
+const INTEREST_POOL = [
+  "Gastronomi", "Psikoloji", "Nörobilim", "Günlük Yaşam", "Edebiyat",
+  "Sinema", "Felsefe", "Sanat", "Bilim", "Tarih",
+];
+const BIOS = [
+  "Sabah kahvesiyle bir sayfa.",
+  "Altını çizmeden okuyamam.",
+  "Kelimelerin peşinde.",
+  "Çoğunlukla dinler, bazen yazar.",
+  "Bir cümle bütün günü değiştirebilir.",
+  "Gece okuru, kenar notçusu.",
+  "Az ama derin okumayı severim.",
+];
 
 /* ----------------------------- Deterministic RNG ----------------------------- */
 function mulberry32(seed: number) {
@@ -209,7 +238,7 @@ async function main() {
   const pubBySlug = new Map<string, string>();
   for (const p of PUBLISHERS) {
     const row = await prisma.publisher.create({
-      data: { ...p, avatarSeed: p.slug },
+      data: { ...p, avatarSeed: p.slug, image: clubImage(p.slug) },
     });
     pubBySlug.set(p.slug, row.id);
   }
@@ -224,7 +253,17 @@ async function main() {
   // Users — first is the demo user using the operator's real email.
   const users: { id: string; displayName: string }[] = [];
   const demo = await prisma.user.create({
-    data: { email: "efe@infinics.xyz", displayName: "Efe", avatarSeed: "efe@infinics.xyz" },
+    data: {
+      email: "efe@infinics.xyz",
+      displayName: "Efe",
+      avatarSeed: "efe@infinics.xyz",
+      onboarded: true,
+      bio: "Tuhaf Club'ın ilk okuru. Altını çizdiklerini biriktirir.",
+      age: 29,
+      gender: "erkek",
+      location: "İstanbul",
+      interests: JSON.stringify(["Psikoloji", "Nörobilim", "Gastronomi"]),
+    },
   });
   users.push(demo);
 
@@ -237,11 +276,27 @@ async function main() {
       .replace(/ç/g, "c").replace(/ş/g, "s").replace(/ğ/g, "g")
       .replace(/ı/g, "i").replace(/ö/g, "o").replace(/ü/g, "u") + "@tuhaf.test";
     const u = await prisma.user.create({
-      data: { email, displayName: name, avatarSeed: email },
+      data: {
+        email,
+        displayName: name,
+        avatarSeed: email,
+        onboarded: true,
+        bio: pick(BIOS),
+        age: randInt(19, 56),
+        gender: pick(PROFILE_GENDERS),
+        location: pick(CITIES),
+        interests: JSON.stringify(sample(INTEREST_POOL, randInt(1, 3))),
+      },
     });
     users.push(u);
   }
-  console.log(`Users: ${users.length}`);
+
+  // A fresh, un-onboarded allowlisted account to demo the onboarding flow.
+  await prisma.user.create({
+    data: { email: "yeni@tuhaf.test", displayName: "Yeni Üye", avatarSeed: "yeni@tuhaf.test", onboarded: false },
+  });
+
+  console.log(`Users: ${users.length + 1} (1 onboarding demo: yeni@tuhaf.test)`);
 
   // Articles + blocks
   const allSpecs = [...HERO, ...FILLERS];
@@ -492,7 +547,8 @@ async function main() {
   });
 
   console.log("\nDone. Sample logins (allowlist):");
-  console.log("  efe@infinics.xyz   (demo user — has highlights)");
+  console.log("  efe@infinics.xyz   (demo user — full profile, highlights, notes)");
+  console.log("  yeni@tuhaf.test    (fresh account — triggers onboarding)");
   for (const u of users.slice(1, 4)) {
     const full = await prisma.user.findUnique({ where: { id: u.id } });
     console.log(`  ${full!.email}`);

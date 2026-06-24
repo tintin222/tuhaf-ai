@@ -6,6 +6,7 @@ type Member = {
   name: string;
   title: string;
   avatarSeed: string;
+  image?: string | null;
 };
 
 /** The "Tuhaf Club" rail — the people who make up the Club. */
@@ -31,6 +32,7 @@ export function ClubRail({ members }: { members: Member[] }) {
             <Avatar
               seed={m.avatarSeed}
               name={m.name}
+              image={m.image}
               size={64}
               className="ring-2 ring-transparent transition-all group-hover:ring-red"
             />

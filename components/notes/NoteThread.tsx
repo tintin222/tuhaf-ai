@@ -100,7 +100,7 @@ function NoteItem({
   return (
     <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
       <div className="flex items-center gap-2">
-        <Avatar seed={note.author.avatarSeed} name={note.author.displayName} size={24} />
+        <Avatar seed={note.author.avatarSeed} name={note.author.displayName} image={note.author.image} size={24} />
         <Link
           href={`/u/${note.author.id}`}
           className="font-body text-sm italic text-cream hover:text-red"
@@ -127,7 +127,7 @@ function NoteItem({
           {note.replies.map((r) => (
             <div key={r.id}>
               <div className="flex items-center gap-2">
-                <Avatar seed={r.author.avatarSeed} name={r.author.displayName} size={20} />
+                <Avatar seed={r.author.avatarSeed} name={r.author.displayName} image={r.author.image} size={20} />
                 <Link
                   href={`/u/${r.author.id}`}
                   className="font-body text-[13px] italic text-cream hover:text-red"

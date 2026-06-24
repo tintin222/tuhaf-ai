@@ -8,7 +8,7 @@ import { Avatar } from "@/components/Avatar";
 import { markNotificationsRead } from "@/lib/actions/social";
 import { logoutAction } from "@/lib/actions/auth";
 
-type NavUser = { id: string; displayName: string; avatarSeed: string } | null;
+type NavUser = { id: string; displayName: string; avatarSeed: string; image?: string | null } | null;
 type Notif = { id: string; body: string; read: boolean; link?: string | null };
 
 const TABS = [
@@ -121,12 +121,15 @@ export function TopNav({
           {user ? (
             <div className="relative">
               <button onClick={() => setMenuOpen((o) => !o)} aria-label="Profil" className="ml-1 rounded-full">
-                <Avatar seed={user.avatarSeed} name={user.displayName} size={32} />
+                <Avatar seed={user.avatarSeed} name={user.displayName} image={user.image} size={32} />
               </button>
               {menuOpen && (
                 <div className="absolute right-0 mt-2 w-48 overflow-hidden rounded-xl border border-white/10 bg-ink-card shadow-2xl">
                   <Link href={`/u/${user.id}`} className="block px-4 py-3 text-sm text-cream hover:bg-white/5">
                     Profilin
+                  </Link>
+                  <Link href="/profil" className="block px-4 py-3 text-sm text-cream hover:bg-white/5">
+                    Profilini düzenle
                   </Link>
                   <form action={logoutAction}>
                     <button className="block w-full px-4 py-3 text-left text-sm text-cream-dim hover:bg-white/5">

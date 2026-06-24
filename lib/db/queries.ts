@@ -234,6 +234,7 @@ export type SuggestedReader = {
   id: string;
   displayName: string;
   avatarSeed: string;
+  image: string | null;
   shared: number;
 };
 
@@ -244,10 +245,10 @@ export async function getOverlapSuggestions(
   limit = 8,
 ): Promise<SuggestedReader[]> {
   const rows = await prisma.$queryRaw<
-    { id: string; displayName: string; avatarSeed: string; shared: bigint | number }[]
+    { id: string; displayName: string; avatarSeed: string; image: string | null; shared: bigint | number }[]
   >`
     SELECT u.id AS id, u.displayName AS displayName, u.avatarSeed AS avatarSeed,
-           COUNT(*) AS shared
+           u.image AS image, COUNT(*) AS shared
     FROM "Highlight" mine
     JOIN "Highlight" other
       ON other.blockId = mine.blockId
@@ -267,6 +268,7 @@ export async function getOverlapSuggestions(
     id: r.id,
     displayName: r.displayName,
     avatarSeed: r.avatarSeed,
+    image: r.image,
     shared: Number(r.shared),
   }));
 }
@@ -350,6 +352,7 @@ export async function getConnections(
     id: p.id,
     displayName: p.displayName,
     avatarSeed: p.avatarSeed,
+    image: p.image,
     viewerFollows: viewerFollows.has(p.id),
     isSelf: p.id === viewerId,
   }));
@@ -400,12 +403,12 @@ function toNoteView(n: {
     id: n.id,
     body: n.body,
     createdAt: n.createdAt.toISOString(),
-    author: { id: n.user.id, displayName: n.user.displayName, avatarSeed: n.user.avatarSeed },
+    author: { id: n.user.id, displayName: n.user.displayName, avatarSeed: n.user.avatarSeed, image: n.user.image ?? null },
     replies: (n.replies ?? []).map((r) => ({
       id: r.id,
       body: r.body,
       createdAt: r.createdAt.toISOString(),
-      author: { id: r.user.id, displayName: r.user.displayName, avatarSeed: r.user.avatarSeed },
+      author: { id: r.user.id, displayName: r.user.displayName, avatarSeed: r.user.avatarSeed, image: r.user.image ?? null },
       replies: [],
     })),
   };
@@ -494,6 +497,7 @@ export async function getActivityFeed(userId: string, limit = 60): Promise<FeedI
     id: u.id,
     displayName: u.displayName,
     avatarSeed: u.avatarSeed,
+    image: u.image ?? null,
   });
 
   const items: FeedItem[] = [
@@ -541,6 +545,7 @@ export type SimilarReader = {
   id: string;
   displayName: string;
   avatarSeed: string;
+  image: string | null;
   shared: number;
   viewerFollows: boolean;
 };
@@ -552,10 +557,10 @@ export async function getReadersLikeYou(
   limit = 12,
 ): Promise<SimilarReader[]> {
   const rows = await prisma.$queryRaw<
-    { id: string; displayName: string; avatarSeed: string; shared: bigint | number }[]
+    { id: string; displayName: string; avatarSeed: string; image: string | null; shared: bigint | number }[]
   >`
     SELECT u.id AS id, u.displayName AS displayName, u.avatarSeed AS avatarSeed,
-           COUNT(*) AS shared
+           u.image AS image, COUNT(*) AS shared
     FROM "Highlight" mine
     JOIN "Highlight" other
       ON other.blockId = mine.blockId
@@ -582,6 +587,7 @@ export async function getReadersLikeYou(
     id: r.id,
     displayName: r.displayName,
     avatarSeed: r.avatarSeed,
+    image: r.image,
     shared: Number(r.shared),
     viewerFollows: fset.has(r.id),
   }));

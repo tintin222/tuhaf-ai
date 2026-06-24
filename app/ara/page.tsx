@@ -41,7 +41,7 @@ export default async function SearchPage({
                   href={`/oku/${a.publisher.slug}/${a.slug}`}
                   className="flex items-center gap-3 rounded-xl border border-white/10 p-4 hover:border-white/25"
                 >
-                  <Avatar seed={a.publisher.avatarSeed} name={a.publisher.name} size={36} />
+                  <Avatar seed={a.publisher.avatarSeed} name={a.publisher.name} image={a.publisher.image} size={36} />
                   <div>
                     <p className="font-display text-lg text-cream">{a.title}</p>
                     <p className="font-label text-[10px] uppercase tracking-[0.14em] text-cream-faint">
