@@ -39,12 +39,31 @@ export async function getCurrentUser() {
   return user ?? null;
 }
 
-/** Allowlist login: only seeded/known emails may enter. Returns the user or
- * null if the email is not on the list. */
-export async function loginWithEmail(email: string) {
-  const normalized = email.trim().toLowerCase();
-  const user = await prisma.user.findUnique({ where: { email: normalized } });
-  if (!user) return null;
+/** Default columns for a brand-new self-signup user (email already normalized). */
+export function newUserDefaults(email: string) {
+  const local = email.split("@")[0] ?? email;
+  const displayName = local.replace(/[._\-]+/g, " ").trim() || "Okur";
+  return {
+    email,
+    displayName,
+    avatarSeed: email,
+    onboarded: false,
+    emailVerified: new Date(),
+  };
+}
+
+/** Find-or-create a user by (already-normalized) email, then set the session
+ *  cookie. Used by the magic-link verify route. */
+export async function createOrLoginByEmail(email: string) {
+  let user = await prisma.user.findUnique({ where: { email } });
+  if (!user) {
+    user = await prisma.user.create({ data: newUserDefaults(email) });
+  } else if (!user.emailVerified) {
+    user = await prisma.user.update({
+      where: { id: user.id },
+      data: { emailVerified: new Date() },
+    });
+  }
   const session = await getSession();
   session.userId = user.id;
   await session.save();
