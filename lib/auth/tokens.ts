@@ -41,13 +41,15 @@ export async function issueLoginToken(email: string): Promise<string | null> {
 
 /** Validate and single-use-consume a raw token. Returns the email or null. */
 export async function consumeLoginToken(raw: string): Promise<string | null> {
-  const row = await prisma.loginToken.findUnique({
-    where: { tokenHash: hashToken(raw) },
-  });
+  const tokenHash = hashToken(raw);
+  const row = await prisma.loginToken.findUnique({ where: { tokenHash } });
   if (!isTokenValid(row, new Date())) return null;
-  await prisma.loginToken.update({
-    where: { id: row!.id },
+  // Atomically claim the token: the update only matches while usedAt is still
+  // null, so concurrent double-clicks of the same link can consume it once.
+  const claimed = await prisma.loginToken.updateMany({
+    where: { id: row!.id, usedAt: null },
     data: { usedAt: new Date() },
   });
+  if (claimed.count !== 1) return null;
   return row!.email;
 }
