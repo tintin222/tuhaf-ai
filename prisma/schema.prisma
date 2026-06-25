@@ -11,7 +11,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/// A reader. Auth is a simple allowlist: known email -> session.
+/// A reader. Auth: passwordless email magic-link, with an optional password.
 model User {
   id          String   @id @default(cuid())
   email       String   @unique
@@ -23,6 +23,8 @@ model User {
   gender      String? // 'kadin' | 'erkek' | 'diger' | 'belirtmek-istemiyorum'
   location    String?
   interests   String   @default("[]") // JSON array of category keys
+  passwordHash  String?   // null = no password set; magic-link only
+  emailVerified DateTime? // set on first successful magic-link click
   onboarded   Boolean  @default(false)
   isAdmin     Boolean  @default(false)
   createdAt   DateTime @default(now())
@@ -34,6 +36,21 @@ model User {
   actedOn       Notification[]      @relation("actor")
   reactions     HighlightReaction[]
   notes         Note[]
+}
+
+/// A single-use, expiring magic-link / verification token, tied to an email.
+/// Only the sha256 hash of the raw token is stored.
+model LoginToken {
+  id        String    @id @default(cuid())
+  email     String    // normalized lowercase
+  tokenHash String    @unique // sha256(rawToken)
+  purpose   String    @default("login") // 'login' | 'password_reset'
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([email])
+  @@index([expiresAt])
 }
 
 /// A Club member / author who publishes one page per day.
