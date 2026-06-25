@@ -21,7 +21,8 @@
     "iron-session": "^8.0.4",
     "next": "^15.5.19",
     "react": "19.0.0",
-    "react-dom": "19.0.0"
+    "react-dom": "19.0.0",
+    "resend": "^6.14.0"
   },
   "devDependencies": {
     "@fontsource/eb-garamond": "^5.1.0",
