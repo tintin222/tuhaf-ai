@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
 import { INTERESTS } from "@/lib/profile";
+import { hashPassword } from "@/lib/auth/password";
 
 export type ProfileInput = {
   displayName: string;
@@ -13,6 +14,7 @@ export type ProfileInput = {
   gender: string | null;
   location: string;
   interests: string[];
+  password?: string; // optional; when >=8 chars, sets/updates the password
 };
 
 export async function saveProfile(
@@ -37,19 +39,25 @@ export async function saveProfile(
     .filter((i) => (INTERESTS as readonly string[]).includes(i))
     .slice(0, 10);
 
-  await prisma.user.update({
-    where: { id: user.id },
-    data: {
-      displayName,
-      image: input.image,
-      bio: input.bio.trim() || null,
-      age,
-      gender: input.gender || null,
-      location: input.location.trim() || null,
-      interests: JSON.stringify(interests),
-      onboarded: true,
-    },
-  });
+  if (input.password && input.password.length > 0 && input.password.length < 8) {
+    return { ok: false, error: "Şifre en az 8 karakter olmalı." };
+  }
+
+  const data: Record<string, unknown> = {
+    displayName,
+    image: input.image,
+    bio: input.bio.trim() || null,
+    age,
+    gender: input.gender || null,
+    location: input.location.trim() || null,
+    interests: JSON.stringify(interests),
+    onboarded: true,
+  };
+  if (input.password && input.password.length >= 8) {
+    data.passwordHash = hashPassword(input.password);
+  }
+
+  await prisma.user.update({ where: { id: user.id }, data });
 
   revalidatePath("/");
   revalidatePath(`/u/${user.id}`);

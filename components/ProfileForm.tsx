@@ -3,6 +3,7 @@
 import { useState, useTransition, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { ImagePicker } from "@/components/ImagePicker";
+import { PasswordField } from "@/components/PasswordField";
 import { saveProfile } from "@/lib/actions/profile";
 import { INTERESTS, GENDERS } from "@/lib/profile";
 
@@ -32,6 +33,7 @@ export function ProfileForm({
   const [gender, setGender] = useState(initial.gender ?? "");
   const [location, setLocation] = useState(initial.location);
   const [interests, setInterests] = useState<string[]>(initial.interests);
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const router = useRouter();
@@ -51,6 +53,7 @@ export function ProfileForm({
         gender: gender || null,
         location,
         interests,
+        password: password || undefined,
       });
       if (res.ok) {
         router.push(redirectTo);
@@ -139,6 +142,17 @@ export function ProfileForm({
         />
         <p className="mt-1 text-right font-body text-xs text-cream-faint">{bio.length}/280</p>
       </Field>
+
+      <PasswordField
+        value={password}
+        onChange={setPassword}
+        label={mode === "onboarding" ? "Şifre belirle (isteğe bağlı)" : "Yeni şifre"}
+        hint={
+          mode === "onboarding"
+            ? "Bir dahaki sefere şifreyle de girebilirsin. İstersen boş bırak."
+            : "Boş bırakırsan şifren değişmez."
+        }
+      />
 
       {error && <p className="font-body text-sm text-red">{error}</p>}
 
