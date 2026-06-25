@@ -305,7 +305,7 @@ async function main() {
     users.push(u);
   }
 
-  // A fresh, un-onboarded allowlisted account to demo the onboarding flow.
+  // A fresh, un-onboarded account to demo the onboarding flow (simulates a brand-new sign-up).
   await prisma.user.create({
     data: { email: "yeni@tuhaf.test", displayName: "Yeni Üye", avatarSeed: "yeni@tuhaf.test", onboarded: false },
   });
@@ -589,7 +589,7 @@ async function main() {
   await prisma.event.createMany({ data: eventRows });
   console.log(`Events: ${eventRows.length}`);
 
-  console.log("\nDone. Sample logins (allowlist):");
+  console.log("\nDone. Sample accounts (open self-signup — anyone can register):");
   console.log("  efe@infinics.xyz   (demo user — full profile, highlights, notes)");
   console.log("  yeni@tuhaf.test    (fresh account — triggers onboarding)");
   for (const u of users.slice(1, 4)) {
