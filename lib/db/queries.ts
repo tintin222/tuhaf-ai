@@ -88,10 +88,10 @@ async function mostUnderlinedRaw(limit: number): Promise<RankedRow[]> {
     { id: string; people: bigint | number; total: bigint | number }[]
   >`
     SELECT a.id AS id,
-           COUNT(DISTINCT h.userId) AS people,
+           COUNT(DISTINCT h."userId") AS people,
            COUNT(h.id) AS total
     FROM "Article" a
-    JOIN "Highlight" h ON h.articleId = a.id
+    JOIN "Highlight" h ON h."articleId" = a.id
     WHERE a.status = 'published'
     GROUP BY a.id
     ORDER BY people DESC, total DESC
@@ -247,18 +247,18 @@ export async function getOverlapSuggestions(
   const rows = await prisma.$queryRaw<
     { id: string; displayName: string; avatarSeed: string; image: string | null; shared: bigint | number }[]
   >`
-    SELECT u.id AS id, u.displayName AS displayName, u.avatarSeed AS avatarSeed,
+    SELECT u.id AS id, u."displayName" AS "displayName", u."avatarSeed" AS "avatarSeed",
            u.image AS image, COUNT(*) AS shared
     FROM "Highlight" mine
     JOIN "Highlight" other
-      ON other.blockId = mine.blockId
-     AND other.userId <> mine.userId
-     AND other.startOffset < mine.endOffset
-     AND other.endOffset > mine.startOffset
-    JOIN "User" u ON u.id = other.userId
-    WHERE mine.userId = ${userId}
-      AND other.userId NOT IN (
-        SELECT followeeId FROM "Follow" WHERE followerId = ${userId}
+      ON other."blockId" = mine."blockId"
+     AND other."userId" <> mine."userId"
+     AND other."startOffset" < mine."endOffset"
+     AND other."endOffset" > mine."startOffset"
+    JOIN "User" u ON u.id = other."userId"
+    WHERE mine."userId" = ${userId}
+      AND other."userId" NOT IN (
+        SELECT "followeeId" FROM "Follow" WHERE "followerId" = ${userId}
       )
     GROUP BY u.id
     ORDER BY shared DESC
@@ -279,15 +279,15 @@ export async function getSharedHighlights(viewerId: string, targetId: string) {
   return prisma.$queryRaw<
     { text: string; articleTitle: string; slug: string }[]
   >`
-    SELECT other.text AS text, a.title AS articleTitle, a.slug AS slug
+    SELECT other.text AS text, a.title AS "articleTitle", a.slug AS slug
     FROM "Highlight" mine
     JOIN "Highlight" other
-      ON other.blockId = mine.blockId
-     AND other.userId = ${targetId}
-     AND other.startOffset < mine.endOffset
-     AND other.endOffset > mine.startOffset
-    JOIN "Article" a ON a.id = other.articleId
-    WHERE mine.userId = ${viewerId}
+      ON other."blockId" = mine."blockId"
+     AND other."userId" = ${targetId}
+     AND other."startOffset" < mine."endOffset"
+     AND other."endOffset" > mine."startOffset"
+    JOIN "Article" a ON a.id = other."articleId"
+    WHERE mine."userId" = ${viewerId}
     LIMIT 20
   `;
 }
@@ -559,16 +559,16 @@ export async function getReadersLikeYou(
   const rows = await prisma.$queryRaw<
     { id: string; displayName: string; avatarSeed: string; image: string | null; shared: bigint | number }[]
   >`
-    SELECT u.id AS id, u.displayName AS displayName, u.avatarSeed AS avatarSeed,
+    SELECT u.id AS id, u."displayName" AS "displayName", u."avatarSeed" AS "avatarSeed",
            u.image AS image, COUNT(*) AS shared
     FROM "Highlight" mine
     JOIN "Highlight" other
-      ON other.blockId = mine.blockId
-     AND other.userId <> mine.userId
-     AND other.startOffset < mine.endOffset
-     AND other.endOffset > mine.startOffset
-    JOIN "User" u ON u.id = other.userId
-    WHERE mine.userId = ${userId}
+      ON other."blockId" = mine."blockId"
+     AND other."userId" <> mine."userId"
+     AND other."startOffset" < mine."endOffset"
+     AND other."endOffset" > mine."startOffset"
+    JOIN "User" u ON u.id = other."userId"
+    WHERE mine."userId" = ${userId}
     GROUP BY u.id
     ORDER BY shared DESC
     LIMIT ${limit}
