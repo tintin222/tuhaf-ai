@@ -1,13 +1,15 @@
 // Tuhaf Club — data model.
-// SQLite for local/synthetic-data dev; kept Postgres-portable:
-// app-generated cuid IDs, no SQLite-only features, ISO/DateTime timestamps.
+// Postgres in all environments (Railway-hosted in prod). Schema stays portable:
+// app-generated cuid IDs, no engine-specific features, ISO/DateTime timestamps.
+// DATABASE_URL is a Postgres connection string; for local dev run a local
+// Postgres or `railway run` against the cloud DB.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
